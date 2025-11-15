@@ -1,0 +1,39 @@
+Roon Volume Control Extension for Denon/Marantz
+Copyright 2025 Michael Spurlock
+
+This product includes software developed by RoonLabs LLC.
+
+This software contains the following third-party components:
+
+================================================================================
+
+node-roon-api
+https://github.com/RoonLabs/node-roon-api
+Copyright RoonLabs LLC
+Licensed under the Apache License, Version 2.0
+
+node-roon-api-settings
+https://github.com/RoonLabs/node-roon-api-settings
+Copyright RoonLabs LLC
+Licensed under the Apache License, Version 2.0
+
+node-roon-api-status
+https://github.com/RoonLabs/node-roon-api-status
+Copyright RoonLabs LLC
+Licensed under the Apache License, Version 2.0
+
+node-roon-api-volume-control
+https://github.com/RoonLabs/node-roon-api-volume-control
+Copyright RoonLabs LLC
+Licensed under the Apache License, Version 2.0
+
+================================================================================
+
+This project was inspired by:
+
+roon-extension-denon
+https://github.com/docbobo/roon-extension-denon
+Copyright Doc Bobo
+Licensed under the Apache License, Version 2.0
+
+================================================================================

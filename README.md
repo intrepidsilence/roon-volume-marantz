@@ -254,13 +254,35 @@ setTimeout(() => client.setMute(false), 6000);
 
 ## License
 
-Apache-2.0
+This project is licensed under the **Apache License 2.0** - see below for details.
 
-## Credits
+Copyright 2025 Michael Spurlock
 
-- Developed using the [Roon API](https://github.com/RoonLabs/node-roon-api)
-- Inspired by [roon-extension-denon](https://github.com/docbobo/roon-extension-denon)
-- Denon/Marantz HTTP API documentation
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+## Credits and Attributions
+
+This extension is built using the following open source projects:
+
+### Roon API
+- **Project**: [node-roon-api](https://github.com/RoonLabs/node-roon-api)
+- **License**: Apache License 2.0
+- **Copyright**: RoonLabs LLC
+- **Usage**: Core API for Roon extension development, including volume control, settings, and status services
+
+### Other Acknowledgments
+- Inspired by [roon-extension-denon](https://github.com/docbobo/roon-extension-denon) by Doc Bobo
+- Denon/Marantz HTTP API documentation from [cheat.readthedocs.io](https://cheat.readthedocs.io/en/latest/denon.html)
 
 ## Contributing
 
