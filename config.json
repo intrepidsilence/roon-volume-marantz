@@ -1,0 +1,20 @@
+{
+    "extension_id": "com.example.roon.marantz-denon-http",
+    "display_name": "Denon/Marantz HTTP Volume Control",
+    "display_version": "1.0.0",
+    "publisher": "Michael Spurlock",
+    "email": "cms@greyspaces.net",
+    "description": "Volume control for Denon and Marantz receivers using HTTP API",
+    "roonstate": {
+        "tokens": {
+            "25a90d4d-ded5-4801-a8e7-677001a83fec": "9ddef6d0-3496-4cdc-8f27-00fe27c080e8"
+        },
+        "paired_core_id": "25a90d4d-ded5-4801-a8e7-677001a83fec"
+    },
+    "settings": {
+        "ip_address": "192.168.15.15",
+        "refresh_interval": "2",
+        "device_name": "Cinema 50 Volume",
+        "volume_type": "number"
+    }
+}

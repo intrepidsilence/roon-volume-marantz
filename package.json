@@ -1,0 +1,19 @@
+{
+  "name": "roon-extension-marantz-denon-http",
+  "version": "1.0.0",
+  "description": "Roon Volume Control Extension for Denon and Marantz receivers using HTTP API",
+  "author": "Your Name",
+  "license": "Apache-2.0",
+  "main": "app.js",
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "dependencies": {
+    "node-roon-api": "github:RoonLabs/node-roon-api",
+    "node-roon-api-settings": "github:RoonLabs/node-roon-api-settings",
+    "node-roon-api-status": "github:RoonLabs/node-roon-api-status",
+    "node-roon-api-volume-control": "github:RoonLabs/node-roon-api-volume-control",
+    "node-fetch": "^2.6.7",
+    "fast-xml-parser": "^4.5.1"
+  }
+}

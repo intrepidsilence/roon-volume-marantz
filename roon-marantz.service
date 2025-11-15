@@ -1,0 +1,24 @@
+[Unit]
+Description=Roon Denon/Marantz HTTP Volume Control Extension
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+WorkingDirectory=/path/to/roon-volume-marantz
+ExecStart=/usr/bin/node app.js
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Environment
+Environment="NODE_ENV=production"
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
