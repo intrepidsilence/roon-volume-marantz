@@ -27,3 +27,4 @@ Thumbs.db
 
 # Roon configuration
 config/
+config.json

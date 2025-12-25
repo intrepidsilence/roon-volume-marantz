@@ -39,7 +39,7 @@ class VolumeControl {
         }
 
         // Create new client
-        this.client = new MarantzClient(config.ip_address);
+        this.client = new MarantzClient(config.ip_address, config.port || '8080');
 
         // Provide suppression callback to client
         this.client.shouldSuppressUpdates = () => {
