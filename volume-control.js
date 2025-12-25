@@ -46,7 +46,8 @@ class VolumeControl {
         console.log(`Initializing receiver ${index + 1}: ${receiver.device_name} at ${receiver.ip_address}:${receiver.port}`);
 
         // Create client
-        const client = new MarantzClient(receiver.ip_address, receiver.port);
+        const label = `[Receiver ${index + 1}: ${receiver.device_name}]`;
+        const client = new MarantzClient(receiver.ip_address, receiver.port, label);
 
         // Set up event handlers
         client.on('volumeChanged', (volume) => {

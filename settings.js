@@ -181,13 +181,6 @@ class SettingsManager {
             receiverFieldCount += receiverItems.length;
         }
 
-        console.log(
-            'Settings layout built:',
-            `count=${count}`,
-            `receiverFields=${receiverFieldCount}`,
-            `valueKeys=${Object.keys(values).length}`
-        );
-
         return l;
     }
 
@@ -222,8 +215,6 @@ class SettingsManager {
         const count = parseInt(settings.receiver_count) || 1;
         const receivers = [];
 
-        console.log('getReceivers: count =', count, 'settings =', JSON.stringify(settings, null, 2));
-
         for (let i = 1; i <= count; i++) {
             const ip = settings[`ip_address_${i}`];
             if (ip) {
@@ -232,7 +223,6 @@ class SettingsManager {
                     port: settings[`port_${i}`] || '8080',
                     device_name: settings[`device_name_${i}`] || `Denon/Marantz Receiver ${i}`
                 };
-                console.log(`Receiver ${i}:`, receiver);
                 receivers.push(receiver);
             }
         }

@@ -5,11 +5,12 @@ const { XMLParser } = require('fast-xml-parser');
 const EventEmitter = require('events');
 
 class MarantzClient extends EventEmitter {
-    constructor(ipAddress, port = '8080') {
+    constructor(ipAddress, port = '8080', label = '') {
         super();
         this.ipAddress = ipAddress;
         this.port = port || '8080';
         this.baseUrl = `http://${ipAddress}:${this.port}/goform`;
+        this.label = label;
         this.parser = new XMLParser();
         this.currentVolume = null;
         this.currentMute = null;
@@ -57,11 +58,13 @@ class MarantzClient extends EventEmitter {
                 const volume = this.parseVolume(volumeRaw);
                 const mute = data.item.Mute?.value === 'on';
 
-                console.log(`Receiver status: volume=${volume}, mute=${mute}`);
+                const prefix = this.label ? `${this.label} ` : '';
+                console.log(`${prefix}Receiver status: volume=${volume}, mute=${mute}`);
 
                 // Emit events if values changed
                 if (volume !== null && volume !== this.currentVolume) {
-                    console.log(`Volume updated: ${this.currentVolume} -> ${volume}`);
+                    const prefix = this.label ? `${this.label} ` : '';
+                    console.log(`${prefix}Volume updated: ${this.currentVolume} -> ${volume}`);
                     this.currentVolume = volume;
                     this.emit('volumeChanged', volume);
                 }
