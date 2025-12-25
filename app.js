@@ -49,6 +49,21 @@ function updateStatus(message, isError = false) {
     svc_status.set_status(message, isError);
 }
 
+function updateStatusFromSettings(settingsManager) {
+    const receivers = settingsManager.getReceivers();
+    if (receivers.length === 0) {
+        updateStatus('Not configured - please set IP address', true);
+        return;
+    }
+
+    if (receivers.length === 1) {
+        updateStatus(`Configured for ${receivers[0].ip_address}`);
+        return;
+    }
+
+    updateStatus(`Configured for ${receivers.length} receivers`);
+}
+
 // Initialize settings manager
 const settingsManager = new SettingsManager(roon);
 const svc_settings = settingsManager.initialize((newSettings) => {
@@ -60,11 +75,7 @@ const svc_settings = settingsManager.initialize((newSettings) => {
     }
 
     // Update status
-    if (newSettings.ip_address) {
-        updateStatus(`Configured for ${newSettings.ip_address}`);
-    } else {
-        updateStatus('Not configured - please set IP address', true);
-    }
+    updateStatusFromSettings(settingsManager);
 });
 
 // Initialize RoonApiVolumeControl service
@@ -90,8 +101,8 @@ roon.init_services({
 });
 
 // Check initial configuration
-const initialSettings = settingsManager.get();
-if (!initialSettings.ip_address) {
+const initialSettings = settingsManager.getReceivers();
+if (initialSettings.length === 0) {
     updateStatus('Not configured - please set IP address in settings', true);
 } else {
     updateStatus('Starting up...');

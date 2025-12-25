@@ -95,6 +95,9 @@ class SettingsManager {
                 if (!hasError && !isDryRun) {
                     this.save(newSettings);
 
+                    // Push updated layout to Roon UI (for dynamic field changes)
+                    this.settings.update_settings(layout);
+
                     // Notify of changes if settings actually changed
                     if (JSON.stringify(oldSettings) !== JSON.stringify(newSettings)) {
                         if (this.onChange) {
@@ -176,11 +179,26 @@ class SettingsManager {
     }
 
     /**
-     * Get current settings
+     * Get current settings (with migration from old format)
      */
     get() {
         const persistedState = this.roon.load_config('settings') || {};
-        return { ...this.defaults, ...persistedState };
+        const settings = { ...this.defaults, ...persistedState };
+
+        // Migrate old single-receiver format to new indexed format
+        if (settings.ip_address && !settings.ip_address_1) {
+            settings.ip_address_1 = settings.ip_address;
+            settings.port_1 = settings.port || '8080';
+            settings.device_name_1 = settings.device_name || 'Denon/Marantz Receiver';
+            // Clean up old keys
+            delete settings.ip_address;
+            delete settings.port;
+            delete settings.device_name;
+            // Save migrated settings
+            this.save(settings);
+        }
+
+        return settings;
     }
 
     /**
@@ -191,14 +209,18 @@ class SettingsManager {
         const count = parseInt(settings.receiver_count) || 1;
         const receivers = [];
 
+        console.log('getReceivers: count =', count, 'settings =', JSON.stringify(settings, null, 2));
+
         for (let i = 1; i <= count; i++) {
             const ip = settings[`ip_address_${i}`];
             if (ip) {
-                receivers.push({
+                const receiver = {
                     ip_address: ip,
                     port: settings[`port_${i}`] || '8080',
                     device_name: settings[`device_name_${i}`] || `Denon/Marantz Receiver ${i}`
-                });
+                };
+                console.log(`Receiver ${i}:`, receiver);
+                receivers.push(receiver);
             }
         }
 

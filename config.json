@@ -7,14 +7,19 @@
     "description": "Volume control for Denon and Marantz receivers using HTTP API",
     "roonstate": {
         "tokens": {
-            "25a90d4d-ded5-4801-a8e7-677001a83fec": "9ddef6d0-3496-4cdc-8f27-00fe27c080e8"
+            "25a90d4d-ded5-4801-a8e7-677001a83fec": "9ddef6d0-3496-4cdc-8f27-00fe27c080e8",
+            "1725d8e0-431f-4cd2-85e3-e864af65ed2d": "2ad5d78d-c814-49a2-83c5-0b40160fc23c"
         },
-        "paired_core_id": "25a90d4d-ded5-4801-a8e7-677001a83fec"
+        "paired_core_id": "1725d8e0-431f-4cd2-85e3-e864af65ed2d"
     },
     "settings": {
+        "receiver_count": "1",
         "ip_address": "192.168.15.15",
         "refresh_interval": "2",
         "device_name": "Cinema 50 Volume",
-        "volume_type": "number"
+        "volume_type": "number",
+        "ip_address_1": "192.168.1.230",
+        "port_1": "80",
+        "device_name_1": "Denon/Marantz Receiver"
     }
 }
