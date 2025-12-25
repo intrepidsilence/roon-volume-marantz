@@ -6,208 +6,184 @@ class VolumeControl {
     constructor(roon, settings) {
         this.roon = roon;
         this.settings = settings;
-        this.client = null;
-        this.volumeControl = null;
+        
+        // Arrays for multiple receivers
+        this.clients = [];
+        this.volumeControls = [];
 
         // Volume mapping configuration
         this.volumeConfig = {
-            min: 0,  // Minimum volume
-            max: 98,      // Maximum volume
-            step: 0.5    // Volume step size
+            min: 0,
+            max: 98,
+            step: 0.5
         };
-
-        // Debouncing and feedback prevention
-        this.volumeDebounceTimer = null;
-        this.lastCommandTime = 0;
-        this.suppressUpdatesUntil = 0;
     }
 
     /**
-     * Initialize the volume control with current settings
+     * Initialize volume controls for all configured receivers
      */
     initialize() {
-        const config = this.settings.get();
+        const receivers = this.settings.getReceivers();
 
-        if (!config.ip_address) {
-            console.log('No IP address configured');
+        if (receivers.length === 0) {
+            console.log('No receivers configured');
             return;
         }
 
-        // Clean up existing client
-        if (this.client) {
-            this.client.destroy();
-        }
+        // Clean up existing clients
+        this.destroy();
 
-        // Create new client
-        this.client = new MarantzClient(config.ip_address);
+        // Create client and volume control for each receiver
+        receivers.forEach((receiver, index) => {
+            this.initializeReceiver(receiver, index);
+        });
+    }
 
-        // Provide suppression callback to client
-        this.client.shouldSuppressUpdates = () => {
-            return Date.now() < this.suppressUpdatesUntil;
-        };
+    /**
+     * Initialize a single receiver
+     */
+    initializeReceiver(receiver, index) {
+        console.log(`Initializing receiver ${index + 1}: ${receiver.device_name} at ${receiver.ip_address}:${receiver.port}`);
+
+        // Create client
+        const client = new MarantzClient(receiver.ip_address, receiver.port);
 
         // Set up event handlers
-        this.client.on('volumeChanged', (volume) => {
-            this.updateVolumeState(volume);
+        client.on('volumeChanged', (volume) => {
+            this.updateVolumeState(index, volume);
         });
 
-        this.client.on('muteChanged', (mute) => {
-            this.updateMuteState(mute);
+        client.on('muteChanged', (mute) => {
+            this.updateMuteState(index, mute);
         });
 
-        this.client.on('error', (error) => {
-            console.error('Marantz client error:', error);
+        client.on('error', (error) => {
+            console.error(`Receiver ${index + 1} (${receiver.device_name}) error:`, error);
         });
 
-        // Configure volume range
-        this.configureVolumeRange();
+        // Store client
+        this.clients[index] = client;
 
         // Register volume control with Roon
-        this.registerVolumeControl(config);
+        this.registerVolumeControl(receiver, index, client);
 
-        // Do an initial status check
-        this.client.getStatus();
+        // Initial status check
+        client.getStatus();
 
-        // Poll every 5 seconds to catch external volume changes
-        this.client.startPolling(5);
+        // Poll every 5 seconds
+        client.startPolling(5);
     }
 
     /**
-     * Configure volume range - always use Marantz native range (0-98)
+     * Register a volume control device with Roon
      */
-    configureVolumeRange() {
-        // Marantz displays 0-98
-        this.volumeConfig.min = 0;
-        this.volumeConfig.max = 98;
-        this.volumeConfig.step = 0.5;
-    }
-
-    /**
-     * Register the volume control device with Roon
-     */
-    registerVolumeControl(config) {
-        const deviceName = config.device_name || 'Denon/Marantz Receiver';
-
-        // Destroy existing control if present
-        if (this.volumeControl) {
-            this.volumeControl.destroy();
-        }
-
-        // Create volume control state
+    registerVolumeControl(receiver, index, client) {
         const state = {
-            display_name: deviceName,
+            display_name: receiver.device_name,
             volume_type: 'number',
             volume_min: this.volumeConfig.min,
             volume_max: this.volumeConfig.max,
             volume_step: this.volumeConfig.step,
-            volume_value: this.client.currentVolume || 0,
-            is_muted: this.client.currentMute || false
+            volume_value: client.currentVolume || 0,
+            is_muted: client.currentMute || false
         };
 
-        // Register with Roon
-        this.volumeControl = this.roon.services.RoonApiVolumeControl.new_device({
+        const volumeControl = this.roon.services.RoonApiVolumeControl.new_device({
             state: state,
-            set_volume: (req) => this.handleSetVolume(req),
-            set_mute: (req) => this.handleSetMute(req)
+            set_volume: (req) => this.handleSetVolume(req, index),
+            set_mute: (req) => this.handleSetMute(req, index)
         });
 
-        console.log(`Volume control registered: ${deviceName}`);
+        this.volumeControls[index] = volumeControl;
+        console.log(`Volume control registered: ${receiver.device_name}`);
     }
 
     /**
      * Handle volume change requests from Roon
      */
-    async handleSetVolume(req) {
-        if (!this.client) {
-            console.error('Client not initialized');
+    async handleSetVolume(req, index) {
+        const client = this.clients[index];
+        if (!client) {
+            console.error(`Client ${index} not initialized`);
             return;
         }
 
         const mode = req.body.mode;
         const value = req.body.value;
 
-        console.log(`Volume change request: mode=${mode}, value=${value}`);
+        console.log(`Volume change request for receiver ${index + 1}: mode=${mode}, value=${value}`);
 
-        // Clear any pending debounce timer
-        if (this.volumeDebounceTimer) {
-            clearTimeout(this.volumeDebounceTimer);
-        }
+        try {
+            let targetVolume = null;
 
-        // Debounce rapid volume changes - wait 200ms after last change
-        this.volumeDebounceTimer = setTimeout(async () => {
-            try {
-                let targetVolume = null;
+            switch (mode) {
+                case 'absolute':
+                    targetVolume = value;
+                    console.log(`Setting volume to: ${targetVolume}`);
+                    await client.setVolume(targetVolume);
+                    break;
 
-                switch (mode) {
-                    case 'absolute':
-                        targetVolume = value;
-                        console.log(`Setting volume to: ${targetVolume}`);
-                        await this.client.setVolume(targetVolume);
-                        break;
+                case 'relative':
+                    const currentVolume = client.currentVolume || 0;
+                    targetVolume = currentVolume + value;
+                    console.log(`Adjusting volume: ${currentVolume} + ${value} = ${targetVolume}`);
+                    await client.setVolume(targetVolume);
+                    break;
 
-                    case 'relative':
-                        const currentVolume = this.client.currentVolume || 0;
-                        targetVolume = currentVolume + value;
-                        console.log(`Adjusting volume: ${currentVolume} + ${value} = ${targetVolume}`);
-                        await this.client.setVolume(targetVolume);
-                        break;
-
-                    case 'relative_step':
-                        if (value > 0) {
-                            await this.client.volumeUp();
-                        } else if (value < 0) {
-                            await this.client.volumeDown();
-                        }
-                        // Get the new volume after stepping
-                        setTimeout(() => {
-                            if (this.client) {
-                                this.client.getStatus();
-                            }
-                        }, 500);
-                        return;
-
-                    default:
-                        console.error(`Unknown volume mode: ${mode}`);
-                        return;
-                }
-
-                // Update Roon immediately with the value we just set
-                // Don't wait for the receiver to confirm
-                if (targetVolume !== null && this.volumeControl) {
-                    this.client.currentVolume = targetVolume;
-                    this.volumeControl.update_state({
-                        volume_value: targetVolume
-                    });
-                }
-
-                // Verify the actual value from receiver after a delay
-                setTimeout(() => {
-                    if (this.client) {
-                        this.client.getStatus();
+                case 'relative_step':
+                    if (value > 0) {
+                        await client.volumeUp();
+                    } else if (value < 0) {
+                        await client.volumeDown();
                     }
-                }, 1000);
+                    setTimeout(() => {
+                        if (client) {
+                            client.getStatus();
+                        }
+                    }, 500);
+                    return;
 
-            } catch (error) {
-                console.error('Error setting volume:', error);
+                default:
+                    console.error(`Unknown volume mode: ${mode}`);
+                    return;
             }
-        }, 200);
+
+            // Update Roon immediately
+            if (targetVolume !== null && this.volumeControls[index]) {
+                client.currentVolume = targetVolume;
+                this.volumeControls[index].update_state({
+                    volume_value: targetVolume
+                });
+            }
+
+            // Verify from receiver after delay
+            setTimeout(() => {
+                if (client) {
+                    client.getStatus();
+                }
+            }, 1000);
+
+        } catch (error) {
+            console.error('Error setting volume:', error);
+        }
     }
 
     /**
      * Handle mute change requests from Roon
      */
-    async handleSetMute(req) {
-        if (!this.client) {
-            console.error('Client not initialized');
+    async handleSetMute(req, index) {
+        const client = this.clients[index];
+        if (!client) {
+            console.error(`Client ${index} not initialized`);
             return;
         }
 
         const action = req.body.action;
-        console.log(`Mute change request: action=${action}`);
+        console.log(`Mute change request for receiver ${index + 1}: action=${action}`);
 
         try {
             const shouldMute = action === 'mute';
-            await this.client.setMute(shouldMute);
+            await client.setMute(shouldMute);
         } catch (error) {
             console.error('Error setting mute:', error);
         }
@@ -216,9 +192,9 @@ class VolumeControl {
     /**
      * Update volume state in Roon
      */
-    updateVolumeState(volume) {
-        if (this.volumeControl) {
-            this.volumeControl.update_state({
+    updateVolumeState(index, volume) {
+        if (this.volumeControls[index]) {
+            this.volumeControls[index].update_state({
                 volume_value: volume
             });
         }
@@ -227,9 +203,9 @@ class VolumeControl {
     /**
      * Update mute state in Roon
      */
-    updateMuteState(mute) {
-        if (this.volumeControl) {
-            this.volumeControl.update_state({
+    updateMuteState(index, mute) {
+        if (this.volumeControls[index]) {
+            this.volumeControls[index].update_state({
                 is_muted: mute
             });
         }
@@ -247,15 +223,21 @@ class VolumeControl {
      * Clean up resources
      */
     destroy() {
-        if (this.client) {
-            this.client.destroy();
-            this.client = null;
-        }
+        // Destroy all clients
+        this.clients.forEach((client, index) => {
+            if (client) {
+                client.destroy();
+            }
+        });
+        this.clients = [];
 
-        if (this.volumeControl) {
-            this.volumeControl.destroy();
-            this.volumeControl = null;
-        }
+        // Destroy all volume controls
+        this.volumeControls.forEach((vc, index) => {
+            if (vc) {
+                vc.destroy();
+            }
+        });
+        this.volumeControls = [];
     }
 }
 
