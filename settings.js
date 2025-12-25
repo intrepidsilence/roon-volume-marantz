@@ -115,8 +115,9 @@ class SettingsManager {
      * Create the settings layout for Roon UI
      */
     makeLayout(settings) {
+        const values = { ...settings };
         const l = {
-            values: settings,
+            values: values,
             layout: [],
             has_error: false
         };
@@ -134,46 +135,58 @@ class SettingsManager {
             setting: 'receiver_count'
         });
 
-        // Dynamic receiver groups
-        const count = parseInt(settings.receiver_count) || 1;
+        // Dynamic receiver fields
+        const count = parseInt(values.receiver_count) || 1;
+        let receiverFieldCount = 0;
         for (let i = 1; i <= count; i++) {
             const suffix = count > 1 ? ` ${i}` : '';
             
             // Set defaults for this receiver if not set
-            if (!settings[`port_${i}`]) {
-                settings[`port_${i}`] = '8080';
+            if (values[`ip_address_${i}`] === undefined) {
+                values[`ip_address_${i}`] = '';
             }
-            if (!settings[`device_name_${i}`]) {
-                settings[`device_name_${i}`] = `Denon/Marantz Receiver${suffix}`;
+            if (!values[`port_${i}`]) {
+                values[`port_${i}`] = '8080';
+            }
+            if (!values[`device_name_${i}`]) {
+                values[`device_name_${i}`] = `Denon/Marantz Receiver${suffix}`;
             }
 
             l.layout.push({
-                type: 'group',
-                title: `Receiver${suffix}`,
-                items: [
-                    {
-                        type: 'string',
-                        title: 'IP Address',
-                        maxlength: 256,
-                        setting: `ip_address_${i}`
-                    },
-                    {
-                        type: 'string',
-                        title: 'Port',
-                        subtitle: 'Newer receivers (2016+) use port 8080. Older models like SR6008 use port 80.',
-                        maxlength: 5,
-                        setting: `port_${i}`
-                    },
-                    {
-                        type: 'string',
-                        title: 'Device Name',
-                        subtitle: 'Name shown in Roon volume control selection.',
-                        maxlength: 256,
-                        setting: `device_name_${i}`
-                    }
-                ]
+                type: 'label',
+                title: `Receiver${suffix}`
             });
+
+            const receiverItems = [
+                {
+                    type: 'string',
+                    title: 'IP Address',
+                    setting: `ip_address_${i}`
+                },
+                {
+                    type: 'string',
+                    title: 'Port',
+                    subtitle: 'Newer receivers (2016+) use port 8080. Older models like SR6008 use port 80.',
+                    setting: `port_${i}`
+                },
+                {
+                    type: 'string',
+                    title: 'Device Name',
+                    subtitle: 'Name shown in Roon volume control selection.',
+                    setting: `device_name_${i}`
+                }
+            ];
+
+            receiverItems.forEach((item) => l.layout.push(item));
+            receiverFieldCount += receiverItems.length;
         }
+
+        console.log(
+            'Settings layout built:',
+            `count=${count}`,
+            `receiverFields=${receiverFieldCount}`,
+            `valueKeys=${Object.keys(values).length}`
+        );
 
         return l;
     }

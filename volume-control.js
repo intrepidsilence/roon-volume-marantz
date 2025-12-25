@@ -90,6 +90,7 @@ class VolumeControl {
 
         const volumeControl = this.roon.services.RoonApiVolumeControl.new_device({
             state: state,
+            control_key: `receiver_${index + 1}`,
             set_volume: (req) => this.handleSetVolume(req, index),
             set_mute: (req) => this.handleSetMute(req, index)
         });
