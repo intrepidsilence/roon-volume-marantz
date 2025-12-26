@@ -15,12 +15,22 @@ A Roon Extension that provides volume control for Denon and Marantz AV receivers
 
 ## Requirements
 
-- Node.js v8.0.0 or later
 - Roon Core (version 1.8 or later)
 - Denon or Marantz AV receiver with network connectivity
 - Receiver and Roon Extension must be on the same network
+- **Either** Docker **or** Node.js v8.0.0+ (for manual installation)
 
 ## Installation
+
+### Quick Start with Docker (Recommended)
+
+```bash
+docker run -d --name roon-marantz --network host --restart unless-stopped intrepidsilence/roon-volume-marantz:latest
+```
+
+Then skip to [Configuration](#configuration) to set up your receiver in Roon.
+
+### Manual Installation
 
 1. Download or clone this repository:
 ```bash
@@ -217,7 +227,25 @@ launchctl load ~/Library/LaunchAgents/com.roon.marantz.plist
 
 ### Docker
 
-Build and run with Docker:
+The easiest way to run this extension is using the pre-built Docker image from Docker Hub:
+
+```bash
+docker run -d \
+  --name roon-marantz \
+  --network host \
+  --restart unless-stopped \
+  intrepidsilence/roon-volume-marantz:latest
+```
+
+Available tags:
+- `latest` - Most recent release
+- `v1.1.1`, `v1.1.0`, etc. - Specific versions
+
+The image supports both `amd64` (Intel/AMD) and `arm64` (Raspberry Pi 4/5, Apple Silicon) architectures.
+
+#### Building from Source
+
+If you prefer to build the image yourself:
 
 ```bash
 docker build -t roon-marantz .
