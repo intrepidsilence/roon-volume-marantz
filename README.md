@@ -23,8 +23,8 @@ A Roon Extension that provides volume control for Denon and Marantz AV receivers
 
 1. Download or clone this repository:
 ```bash
-git clone https://github.com/yourusername/roon-extension-marantz-denon-http.git
-cd roon-extension-marantz-denon-http
+git clone https://github.com/intrepidsilence/roon-volume-marantz.git
+cd roon-volume-marantz
 ```
 
 2. Install dependencies:
