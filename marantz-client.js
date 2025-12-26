@@ -5,10 +5,11 @@ const { XMLParser } = require('fast-xml-parser');
 const EventEmitter = require('events');
 
 class MarantzClient extends EventEmitter {
-    constructor(ipAddress) {
+    constructor(ipAddress, port = '8080') {
         super();
         this.ipAddress = ipAddress;
-        this.baseUrl = `http://${ipAddress}:8080/goform`;
+        this.port = port;
+        this.baseUrl = `http://${ipAddress}:${port}/goform`;
         this.parser = new XMLParser();
         this.currentVolume = null;
         this.currentMute = null;
@@ -194,11 +195,12 @@ class MarantzClient extends EventEmitter {
     }
 
     /**
-     * Update IP address
+     * Update IP address and port
      */
-    updateIpAddress(ipAddress) {
+    updateConnection(ipAddress, port = '8080') {
         this.ipAddress = ipAddress;
-        this.baseUrl = `http://${ipAddress}:8080/goform`;
+        this.port = port;
+        this.baseUrl = `http://${ipAddress}:${port}/goform`;
 
         // Restart polling if it was active
         if (this.pollInterval) {

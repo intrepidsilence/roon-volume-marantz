@@ -9,6 +9,7 @@ class SettingsManager {
         // Default settings
         this.defaults = {
             ip_address: '',
+            port: '8080',
             device_name: 'Denon/Marantz Receiver'
         };
     }
@@ -47,6 +48,14 @@ class SettingsManager {
                         const ip = getValue(settings.values.ip_address);
                         if (typeof ip === 'string') {
                             newSettings.ip_address = ip.trim();
+                        }
+                    }
+
+                    // Port
+                    if (settings.values.port !== undefined) {
+                        const port = getValue(settings.values.port);
+                        if (typeof port === 'string') {
+                            newSettings.port = port.trim();
                         }
                     }
 
@@ -126,6 +135,13 @@ class SettingsManager {
                     title: 'IP Address',
                     maxlength: 256,
                     setting: 'ip_address'
+                },
+                {
+                    type: 'string',
+                    title: 'Port',
+                    subtitle: 'Newer receivers (2016+) use port 8080. Older models like SR6008 use port 80.',
+                    maxlength: 5,
+                    setting: 'port'
                 }
             ]
         });
