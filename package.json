@@ -1,6 +1,6 @@
 {
   "name": "roon-extension-marantz-denon-http",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Roon Volume Control Extension for Denon and Marantz receivers using HTTP API",
   "author": "Your Name",
   "license": "Apache-2.0",
