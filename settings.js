@@ -174,40 +174,36 @@ class SettingsManager {
                 values[`device_name_${i}`] = `Denon/Marantz Receiver${suffix}`;
             }
 
-            // Add a label for multi-receiver setups
+            // Add a label/separator for multi-receiver setups
             if (count > 1) {
                 l.layout.push({
                     type: 'label',
-                    title: `Receiver${suffix}`
+                    title: `── Receiver${suffix} ──`
                 });
             }
 
-            // Receiver settings group
+            // Push receiver settings directly (not nested in a group)
             l.layout.push({
-                type: 'group',
-                title: count > 1 ? '' : 'Receiver Settings',
-                items: [
-                    {
-                        type: 'string',
-                        title: 'IP Address',
-                        maxlength: 256,
-                        setting: `ip_address_${i}`
-                    },
-                    {
-                        type: 'string',
-                        title: 'Port',
-                        subtitle: 'Newer receivers (2016+) use port 8080. Older models like SR6008 use port 80.',
-                        maxlength: 5,
-                        setting: `port_${i}`
-                    },
-                    {
-                        type: 'string',
-                        title: 'Device Name',
-                        subtitle: 'Name shown in Roon volume control selection.',
-                        maxlength: 256,
-                        setting: `device_name_${i}`
-                    }
-                ]
+                type: 'string',
+                title: count > 1 ? 'IP Address' : 'IP Address',
+                maxlength: 256,
+                setting: `ip_address_${i}`
+            });
+
+            l.layout.push({
+                type: 'string',
+                title: 'Port',
+                subtitle: 'Newer receivers (2016+) use port 8080. Older models like SR6008 use port 80.',
+                maxlength: 5,
+                setting: `port_${i}`
+            });
+
+            l.layout.push({
+                type: 'string',
+                title: 'Device Name',
+                subtitle: 'Name shown in Roon volume control selection.',
+                maxlength: 256,
+                setting: `device_name_${i}`
             });
         }
 
