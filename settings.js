@@ -1,5 +1,7 @@
 "use strict";
 
+const MAX_RECEIVERS = 4;
+
 class SettingsManager {
     constructor(roon) {
         this.roon = roon;
@@ -8,9 +10,7 @@ class SettingsManager {
 
         // Default settings
         this.defaults = {
-            ip_address: '',
-            port: '8080',
-            device_name: 'Denon/Marantz Receiver'
+            receiver_count: '1'
         };
     }
 
@@ -43,27 +43,42 @@ class SettingsManager {
 
                 // Parse and validate settings
                 if (settings.values) {
-                    // IP Address
-                    if (settings.values.ip_address !== undefined) {
-                        const ip = getValue(settings.values.ip_address);
-                        if (typeof ip === 'string') {
-                            newSettings.ip_address = ip.trim();
+                    // Receiver count
+                    if (settings.values.receiver_count !== undefined) {
+                        const count = getValue(settings.values.receiver_count);
+                        if (count) {
+                            newSettings.receiver_count = count;
                         }
                     }
 
-                    // Port
-                    if (settings.values.port !== undefined) {
-                        const port = getValue(settings.values.port);
-                        if (typeof port === 'string') {
-                            newSettings.port = port.trim();
+                    // Dynamic receiver settings
+                    const count = parseInt(newSettings.receiver_count) || 1;
+                    for (let i = 1; i <= count; i++) {
+                        // IP Address
+                        const ipKey = `ip_address_${i}`;
+                        if (settings.values[ipKey] !== undefined) {
+                            const ip = getValue(settings.values[ipKey]);
+                            if (typeof ip === 'string') {
+                                newSettings[ipKey] = ip.trim();
+                            }
                         }
-                    }
 
-                    // Device Name
-                    if (settings.values.device_name !== undefined) {
-                        const name = getValue(settings.values.device_name);
-                        if (typeof name === 'string') {
-                            newSettings.device_name = name.trim();
+                        // Port
+                        const portKey = `port_${i}`;
+                        if (settings.values[portKey] !== undefined) {
+                            const port = getValue(settings.values[portKey]);
+                            if (typeof port === 'string') {
+                                newSettings[portKey] = port.trim();
+                            }
+                        }
+
+                        // Device Name
+                        const nameKey = `device_name_${i}`;
+                        if (settings.values[nameKey] !== undefined) {
+                            const name = getValue(settings.values[nameKey]);
+                            if (typeof name === 'string') {
+                                newSettings[nameKey] = name.trim();
+                            }
                         }
                     }
                 }
@@ -79,6 +94,9 @@ class SettingsManager {
                 // Save settings if not dry run and no errors
                 if (!hasError && !isDryRun) {
                     this.save(newSettings);
+
+                    // Push updated layout to Roon UI (for dynamic field changes)
+                    this.settings.update_settings(layout);
 
                     // Notify of changes if settings actually changed
                     if (JSON.stringify(oldSettings) !== JSON.stringify(newSettings)) {
@@ -120,54 +138,126 @@ class SettingsManager {
      * Create the settings layout for Roon UI
      */
     makeLayout(settings) {
+        const values = { ...settings };
         const l = {
-            values: settings,
+            values: values,
             layout: [],
             has_error: false
         };
 
-        l.layout.push({
-            type: 'group',
-            title: 'Receiver Settings',
-            items: [
-                {
-                    type: 'string',
-                    title: 'IP Address',
-                    maxlength: 256,
-                    setting: 'ip_address'
-                },
-                {
-                    type: 'string',
-                    title: 'Port',
-                    subtitle: 'Newer receivers (2016+) use port 8080. Older models like SR6008 use port 80.',
-                    maxlength: 5,
-                    setting: 'port'
-                }
-            ]
-        });
+        // Receiver count dropdown
+        const countValues = [];
+        for (let i = 1; i <= MAX_RECEIVERS; i++) {
+            countValues.push({ title: `${i}`, value: `${i}` });
+        }
 
         l.layout.push({
-            type: 'group',
-            title: 'Volume Control Settings',
-            items: [
-                {
-                    type: 'string',
-                    title: 'Device Name',
-                    maxlength: 256,
-                    setting: 'device_name'
-                }
-            ]
+            type: 'dropdown',
+            title: 'Number of Receivers',
+            values: countValues,
+            setting: 'receiver_count'
         });
+
+        // Dynamic receiver fields
+        const count = parseInt(values.receiver_count) || 1;
+        for (let i = 1; i <= count; i++) {
+            const suffix = count > 1 ? ` ${i}` : '';
+
+            // Set defaults for this receiver if not set
+            if (values[`ip_address_${i}`] === undefined) {
+                values[`ip_address_${i}`] = '';
+            }
+            if (!values[`port_${i}`]) {
+                values[`port_${i}`] = '8080';
+            }
+            if (!values[`device_name_${i}`]) {
+                values[`device_name_${i}`] = `Denon/Marantz Receiver${suffix}`;
+            }
+
+            // Add a label for multi-receiver setups
+            if (count > 1) {
+                l.layout.push({
+                    type: 'label',
+                    title: `Receiver${suffix}`
+                });
+            }
+
+            // Receiver settings group
+            l.layout.push({
+                type: 'group',
+                title: count > 1 ? '' : 'Receiver Settings',
+                items: [
+                    {
+                        type: 'string',
+                        title: 'IP Address',
+                        maxlength: 256,
+                        setting: `ip_address_${i}`
+                    },
+                    {
+                        type: 'string',
+                        title: 'Port',
+                        subtitle: 'Newer receivers (2016+) use port 8080. Older models like SR6008 use port 80.',
+                        maxlength: 5,
+                        setting: `port_${i}`
+                    },
+                    {
+                        type: 'string',
+                        title: 'Device Name',
+                        subtitle: 'Name shown in Roon volume control selection.',
+                        maxlength: 256,
+                        setting: `device_name_${i}`
+                    }
+                ]
+            });
+        }
 
         return l;
     }
 
     /**
-     * Get current settings
+     * Get current settings (with migration from old format)
      */
     get() {
         const persistedState = this.roon.load_config('settings') || {};
-        return { ...this.defaults, ...persistedState };
+        const settings = { ...this.defaults, ...persistedState };
+
+        // Migrate old single-receiver format to new indexed format
+        if (settings.ip_address && !settings.ip_address_1) {
+            settings.ip_address_1 = settings.ip_address;
+            settings.port_1 = settings.port || '8080';
+            settings.device_name_1 = settings.device_name || 'Denon/Marantz Receiver';
+            // Clean up old keys
+            delete settings.ip_address;
+            delete settings.port;
+            delete settings.device_name;
+            // Save migrated settings
+            this.save(settings);
+        }
+
+        return settings;
+    }
+
+    /**
+     * Get configured receivers as an array
+     */
+    getReceivers() {
+        const settings = this.get();
+        const count = parseInt(settings.receiver_count) || 1;
+        const receivers = [];
+
+        for (let i = 1; i <= count; i++) {
+            const ip = settings[`ip_address_${i}`];
+            if (ip) {
+                receivers.push({
+                    index: i,
+                    ip_address: ip,
+                    port: settings[`port_${i}`] || '8080',
+                    device_name: settings[`device_name_${i}`] || `Denon/Marantz Receiver ${i}`
+                });
+            }
+        }
+
+        return receivers;
     }
 
     /**

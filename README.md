@@ -5,10 +5,11 @@ A Roon Extension that provides volume control for Denon and Marantz AV receivers
 ## Features
 
 - Control Denon/Marantz receiver volume from within Roon
+- **Support for up to 4 receivers** - control multiple receivers independently
 - Support for absolute and incremental volume control
 - Mute/unmute functionality
 - Real-time status synchronization
-- Configurable volume scale mapping (dB, Number, or Incremental)
+- Configurable port setting (8080 for newer receivers, 80 for older models)
 - Settings UI within Roon for easy configuration
 - Automatic polling for receiver status updates
 
@@ -32,12 +33,18 @@ cd roon-volume-marantz
 npm install
 ```
 
-3. Start the extension:
+3. Create your configuration file:
+```bash
+cp config.json.example config.json
+```
+   - Edit `config.json` to customize the extension name, publisher info, etc.
+
+4. Start the extension:
 ```bash
 node app.js
 ```
 
-4. The extension should now appear in Roon:
+5. The extension should now appear in Roon:
    - Open Roon
    - Go to **Settings** → **Extensions**
    - Find "Denon/Marantz HTTP Volume Control" and click **Enable**
@@ -50,26 +57,22 @@ After enabling the extension, configure it in Roon:
 2. Click **Settings**
 3. Configure the following options:
 
-### Receiver Settings
+### Number of Receivers
+
+Select how many receivers you want to control (1-4). Each receiver will appear as a separate volume control device in Roon.
+
+### Receiver Settings (per receiver)
 
 - **IP Address**: The IP address or hostname of your Denon/Marantz receiver
   - Example: `192.168.1.100` or `receiver.local`
 
-- **Refresh Interval**: How often (in seconds) to poll the receiver for status updates
-  - Range: 1-60 seconds
-  - Default: 2 seconds
-  - Lower values provide more responsive updates but increase network traffic
-
-### Volume Control Settings
-
-- **Volume Type**: How volume is displayed and controlled in Roon
-  - **dB (-79.5 to 0)**: Standard decibel scale, typical for audio equipment
-  - **Number (0 to 99)**: Numeric scale from 0-99 (maps to -79.5 to +19.5 dB)
-  - **Incremental (up/down only)**: Only allows volume up/down, no absolute control
+- **Port**: The HTTP API port for your receiver
+  - **8080** (default): For newer receivers (2016 and later)
+  - **80**: For older models like the SR6008
 
 - **Device Name**: The name that appears in Roon when assigning this volume control
   - Example: "Living Room Receiver" or "Marantz SR7013"
-  - This helps identify the device when you have multiple zones
+  - This helps identify the device when you have multiple receivers
 
 ## Usage
 
@@ -109,14 +112,15 @@ This extension uses the Denon/Marantz HTTP API on port 8080. The following comma
 ## Project Structure
 
 ```
-roon-extension-marantz-denon-http/
+roon-volume-marantz/
 ├── app.js                  # Main application entry point
-├── config.json            # Extension configuration
-├── package.json           # Node.js dependencies
-├── marantz-client.js      # HTTP API client for Denon/Marantz
-├── volume-control.js      # Roon volume control implementation
-├── settings.js            # Settings manager for Roon UI
-└── README.md              # This file
+├── config.json.example     # Template for extension configuration
+├── config.json             # Your local configuration (git-ignored)
+├── package.json            # Node.js dependencies
+├── marantz-client.js       # HTTP API client for Denon/Marantz
+├── volume-control.js       # Roon volume control implementation
+├── settings.js             # Settings manager for Roon UI
+└── README.md               # This file
 ```
 
 ## Troubleshooting
@@ -132,11 +136,13 @@ roon-extension-marantz-denon-http/
 
 - Verify the IP address is correct in settings
 - Ensure the receiver is powered on and connected to the network
+- **Check the port setting**: Newer receivers (2016+) use port 8080, older models use port 80
 - Test the HTTP API directly in a web browser:
   ```
   http://YOUR_RECEIVER_IP:8080/goform/formMainZone_MainZoneXmlStatusLite.xml
   ```
-- Check that port 8080 is not blocked by a firewall
+  (Replace 8080 with 80 for older receivers)
+- Check that the port is not blocked by a firewall
 - Verify the receiver's network settings allow HTTP control
 
 ### Volume changes not reflected in Roon

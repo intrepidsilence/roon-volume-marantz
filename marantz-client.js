@@ -5,16 +5,24 @@ const { XMLParser } = require('fast-xml-parser');
 const EventEmitter = require('events');
 
 class MarantzClient extends EventEmitter {
-    constructor(ipAddress, port = '8080') {
+    constructor(ipAddress, port = '8080', label = '') {
         super();
         this.ipAddress = ipAddress;
-        this.port = port;
-        this.baseUrl = `http://${ipAddress}:${port}/goform`;
+        this.port = port || '8080';
+        this.baseUrl = `http://${ipAddress}:${this.port}/goform`;
+        this.label = label;
         this.parser = new XMLParser();
         this.currentVolume = null;
         this.currentMute = null;
         this.pollInterval = null;
         this.shouldSuppressUpdates = null; // Callback to check if updates should be suppressed
+    }
+
+    /**
+     * Get log prefix for this client
+     */
+    get logPrefix() {
+        return this.label ? `[${this.label}] ` : '';
     }
 
     /**
@@ -31,7 +39,7 @@ class MarantzClient extends EventEmitter {
 
             return true;
         } catch (error) {
-            console.error(`Error sending command ${command}:`, error.message);
+            console.error(`${this.logPrefix}Error sending command ${command}:`, error.message);
             throw error;
         }
     }
@@ -57,11 +65,11 @@ class MarantzClient extends EventEmitter {
                 const volume = this.parseVolume(volumeRaw);
                 const mute = data.item.Mute?.value === 'on';
 
-                console.log(`Receiver status: volume=${volume}, mute=${mute}`);
+                console.log(`${this.logPrefix}Receiver status: volume=${volume}, mute=${mute}`);
 
                 // Emit events if values changed
                 if (volume !== null && volume !== this.currentVolume) {
-                    console.log(`Volume updated: ${this.currentVolume} -> ${volume}`);
+                    console.log(`${this.logPrefix}Volume updated: ${this.currentVolume} -> ${volume}`);
                     this.currentVolume = volume;
                     this.emit('volumeChanged', volume);
                 }
@@ -80,7 +88,7 @@ class MarantzClient extends EventEmitter {
 
             return null;
         } catch (error) {
-            console.error('Error getting status:', error.message);
+            console.error(`${this.logPrefix}Error getting status:`, error.message);
             this.emit('error', error);
             return null;
         }

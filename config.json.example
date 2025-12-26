@@ -1,0 +1,8 @@
+{
+    "extension_id": "com.example.roon.marantz-denon-http",
+    "display_name": "Denon/Marantz HTTP Volume Control",
+    "display_version": "1.1.0",
+    "publisher": "Your Name",
+    "email": "your@email.com",
+    "description": "Volume control for Denon and Marantz receivers using HTTP API"
+}
